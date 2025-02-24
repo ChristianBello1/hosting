@@ -1,0 +1,185 @@
+services:
+  # Frontend Service
+  client:
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - frontend
+    depends_on:
+      - server
+
+  # Backend Service
+  server:
+    build: 
+      context: ./server
+      dockerfile: Dockerfile
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=${PORT}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+    networks:
+      - backend
+      - frontend
+    depends_on:
+      - prometheus
+
+  # Monitoring Stack
+  grafana:
+    image: grafana/grafana:9.5.5
+    volumes:
+      - monitoring_data:/var/lib/grafana
+      - ./docker/monitoring/config/grafana.ini:/etc/grafana/grafana.ini
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    volumes:
+      - prometheus_data:/prometheus
+      - ./docker/monitoring/config/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backup Service
+  backup:
+    build: 
+      context: ./docker/backup
+      dockerfile: Dockerfile
+    volumes:
+      - backup_data:/backups
+      - ./server/sites:/sites:ro
+      - ./docker/backup/scripts:/docker/backup/scripts
+      - ./docker/backup/logs:/docker/backup/logs
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - JWT_TOKEN=${JWT_TOKEN}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "test", "-f", "/docker/backup/scripts/backup.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # CDN Service
+  cdn:
+    build:
+      context: ./docker/cdn
+      dockerfile: Dockerfile
+    volumes:
+      - cdn_cache:/var/lib/varnish
+      - ./server/sites:/var/www/html:ro
+    expose:
+      - "80"
+      - "443"
+    networks:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Load Balancer Service
+  loadbalancer:
+    build:
+      context: ./docker/loadbalancer
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9000:9000"
+    volumes:
+      - ./docker/loadbalancer/certs:/certs
+      - ./docker/loadbalancer/config:/config
+      - ./docker/loadbalancer/scripts:/scripts
+      - letsencrypt_data:/etc/letsencrypt
+    environment:
+      - STATS_PASSWORD=${JWT_SECRET}
+      - LE_EMAIL=${LE_EMAIL}
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - cdn
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true
+  monitoring:
+    driver: bridge
+
+volumes:
+  monitoring_data:
+  prometheus_data:
+  backup_data:
+  cdn_cache:
+  letsencrypt_data:

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+    <script>
+      // Debug estremo
+      window.onerror = function(message, source, lineno, colno, error) {
+        alert(`ERRORE GLOBALE:\n
+          Messaggio: ${message}\n
+          Sorgente: ${source}\n
+          Linea: ${lineno}\n
+          Colonna: ${colno}\n
+          Errore: ${error}`);
+        return false;
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
