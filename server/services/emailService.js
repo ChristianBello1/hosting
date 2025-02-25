@@ -1,11 +1,11 @@
 // server/services/emailService.js
 const nodemailer = require('nodemailer');
 
-// Create reusable transporter using Gmail
+// Create reusable transporter using Mailtrap or another email service
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT,
-  secure: true, // true for port 465
+  secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
@@ -14,6 +14,16 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendPasswordResetEmail = async (email, resetToken) => {
+  // Se non ci sono le variabili d'ambiente necessarie, restituisci un successo "finto"
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER) {
+    console.log('Email service not configured, skipping email to:', email);
+    return { 
+      success: false, 
+      messageId: 'email-service-disabled',
+      info: 'Email service is not configured properly'
+    };
+  }
+
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
   
   const mailOptions = {
@@ -68,19 +78,30 @@ const sendPasswordResetEmail = async (email, resetToken) => {
       recipientEmail: email,
       stack: error.stack
     });
-    throw new Error('Failed to send password reset email');
+    // Invece di lanciare un errore, restituisci un oggetto con info sull'errore
+    return { 
+      success: false, 
+      error: true, 
+      message: 'Email service unavailable but application will continue'
+    };
   }
 };
 
-// Verifica la connessione al servizio email all'avvio
+// Verifica la connessione al servizio email all'avvio ma non blocca l'applicazione
+let emailServiceAvailable = false;
+
 transporter.verify()
   .then(() => {
     console.log('Email service is ready to send emails');
+    emailServiceAvailable = true;
   })
   .catch((error) => {
     console.error('Email service configuration error:', error);
+    console.log('Application will continue running without email functionality');
+    emailServiceAvailable = false;
   });
 
 module.exports = {
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  isEmailServiceAvailable: () => emailServiceAvailable
 };
