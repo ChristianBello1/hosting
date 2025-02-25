@@ -17,7 +17,6 @@ const DashboardLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <DemoBanner />
       {/* Top bar */}
       <div className="fixed top-0 left-0 right-0 bg-white shadow z-50">
         <div className="max-w-full mx-auto h-16">
@@ -103,6 +102,9 @@ const DashboardLayout = ({ children }) => {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
+
+      {/* Demo Banner */}
+      <DemoBanner />
     </div>
   );
 };

@@ -364,6 +364,38 @@ router.post('/forgot-password', validateForgotPassword, async (req, res) => {
   }
 });
 
+// Aggiungi questa route dopo la route 'forgot-password'
+router.post('/demo-forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const admin = await Admin.findOne({ email });
+
+    // Genera il token di reset (indipendentemente se l'utente esiste o no)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = Date.now() + 3600000; // 1 ora
+
+    // Se l'utente esiste, salva il token
+    if (admin) {
+      admin.resetPasswordToken = resetToken;
+      admin.resetPasswordExpires = tokenExpiry;
+      await admin.save();
+    }
+
+    // Restituisci direttamente il token all'applicazione frontend 
+    // NOTA: questo è solo per scopi dimostrativi!
+    res.status(200).json({
+      success: true,
+      message: 'Reset token generato con successo (solo per demo)',
+      resetToken: resetToken,
+      resetUrl: `${process.env.FRONTEND_URL}/reset-password/${resetToken}`,
+      note: 'In un ambiente di produzione, questo token verrebbe inviato via email, non restituito nell\'API'
+    });
+  } catch (error) {
+    console.error('Demo password reset error:', error);
+    res.status(500).json({ message: 'Errore nella generazione del token di reset' });
+  }
+});
+
 // Reset Password
 router.post('/reset-password/:token', validatePasswordReset, async (req, res) => {
   try {

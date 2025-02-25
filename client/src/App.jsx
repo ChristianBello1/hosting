@@ -8,6 +8,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ClientFiles from './pages/ClientFiles';
+import DemoBanner from './components/layout/DemoBanner';
 
 const App = () => {
   console.log('App initialization - Current path:', window.location.pathname);
@@ -16,6 +17,9 @@ const App = () => {
     <AuthProvider>
       <Router>
         <div className="min-h-screen w-full bg-gray-100">
+          {/* Demo Banner */}
+          <DemoBanner />
+          
           <Routes>
             <Route path="/" element={<Navigate to="/login" />} />
             

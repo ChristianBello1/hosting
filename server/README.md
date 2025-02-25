@@ -18,6 +18,18 @@ Visita la demo: [https://cliente-demo.vercel.app](https://cliente-demo.vercel.ap
 - **File Manager:** Caricamento e gestione file per ogni cliente
 - **Pannello Admin:** Interfaccia intuitiva per la gestione
 
+## Funzionalità di reset password in modalità demo
+
+Per testare la funzionalità di reset password senza un servizio email reale:
+
+1. Vai alla pagina "Password dimenticata"
+2. Inserisci un'email
+3. Clicca sul pulsante "Demo: Genera token di reset"
+4. Clicca sul pulsante "Vai alla pagina di reset password" che apparirà
+5. Imposta la tua nuova password
+
+In un ambiente di produzione, il token di reset verrebbe inviato tramite email all'utente.
+
 ## 🔄 Modalità Demo
 
 Questa è una versione dimostrativa con le seguenti caratteristiche:
@@ -39,4 +51,4 @@ Questa è una versione dimostrativa con le seguenti caratteristiche:
 
 Questo progetto è stato sviluppato come parte del mio portfolio per dimostrare le mie competenze nello sviluppo full-stack di applicazioni web. È una versione semplificata di un sistema reale di gestione clienti per hosting.
 
-Per la versione completa o per commissionare un progetto simile, contattatemi su [il tuo contatto].
+Per la versione completa o per commissionare un progetto simile, contattatemi su christianbello789@gmail.com.

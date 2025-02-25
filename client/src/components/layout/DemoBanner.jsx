@@ -27,7 +27,8 @@ const DemoBanner = () => {
                 Modalità Demo - I dati vengono resettati ogni 24 ore
               </p>
               <p className="text-sm">
-                Accedi con: <span className="font-bold">demo@example.com</span> / <span className="font-bold">demo123</span>
+                Accedi con: <span className="font-bold">demo@example.com</span> / <span className="font-bold">demo123</span> | 
+                <span className="ml-2">Per testare il reset password, usa l'opzione "Demo" nella pagina Recupero Password</span>
               </p>
             </div>
           </div>
